@@ -137,6 +137,38 @@ defined here. The IncomingStream, OutgoingStream, and BidirectionalStream
 defined here correspend to a higher level of abstraction that contain and
 depend on the lower-level concepts of "streams" defined in [[!WHATWG-STREAMS]].
 
+# Concepts #  {#concepts}
+
+A <dfn for="/" lt="concept-transport">transport</dfn> consists of:
+ - <dfn for="transport">connection</dfn>: A [=/concept-connection|connection=]
+ - <dfn for="transport">datagram queue</dfn>: A queue of a tuple of bytes,
+   a timestamp and a promise
+ - <dfn for="transport">datagram high water mark</dfn>: An integer, 1 by default
+ - <dfn for="transport">datagram timeout duration</dfn>: A time duration or null
+
+To <dfn>write a datagram</dfn>, given a [=concept-transport|transport=]
+|transport| and a {{Uint8Array}} |datagram|, run the following steps:
+
+1. Let |p| be a new promise.
+1. Let |highWaterMark| be |transport|'s [=transport/datagram high water mark=].
+1. Let |queue| be |transport|'s [=transport/datagram queue=].
+1. Let |bytes| be bytes which |datagram| represents.
+1. Let |timestamp| be a timestamp representing now.
+1. Let |duration| be |transport|'s [=transport/datagram timeout duration=].
+1. If |duration| is null:
+    1. Set |duration| to a time duration which the user agent choose. The user
+       agent may pick any time duration as long as the time stamps in
+       |transport|'s [=transport/datagram queue=] are in ascending order.
+1. Add |duration| to |timestamp|.
+1. Enqueue a copy of |bytes|, |timestamp| and |p| to |queue|.
+1. If the length of |queue| is less than |highWaterMark|, then:
+    1. Fulfill |p| with {{undefined}}.
+1. return |p|.
+1. Call [=send datagram=] with |transport| at |timestamp|.
+
+To <dfn>send datagrams</dfn>, given a [=concept-transport|transport=]
+|transport|, run the following steps:
+
 # `UnidirectionalStreamsTransport` Mixin #  {#unidirectional-streams-transport}
 
 A {{UnidirectionalStreamsTransport}} can send and receive unidirectional
